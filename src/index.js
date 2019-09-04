@@ -160,7 +160,7 @@ function collectDOMStat(root) {
         else stat.tags[node.tagName] = 1;
 
         for (let i = 0; i < node.classList.length; i++) {
-          c = node.classList[i];
+          let c = node.classList[i];
           if (c in stat.classes) stat.classes[c]++;
           else stat.classes[c] = 1
         }
