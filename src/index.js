@@ -207,12 +207,36 @@ function collectDOMStat(root) {
      nodes: [div]
    }
  */
-function observeChildNodes(where, fn) {
-  let observer = new MutationObserver(fn);
-  observer.observe(where, {
-    subtree:true
-  });
-}
+  function observeChildNodes(where, fn) {
+    let chs = {
+      type: '',
+      nodes: []
+    }
+    let observer = new MutationObserver(mutationRecords => {
+      for (let i = 0; i < mutationRecords.length; i++) {
+        if (mutationRecords[i].addedNodes.length != 0) {
+          let chs = {
+            type: 'insert',
+            nodes: [...mutationRecords[i].addedNodes]
+          }
+          fn(chs);
+        };
+        if (mutationRecords[i].removedNodes.length != 0) {
+          let chs = {
+            type: 'remove',
+            nodes: [...mutationRecords[i].removedNodes]
+          }
+          fn(chs);
+        };
+      }
+    });
+
+    // наблюдать за всем, кроме атрибутов
+    observer.observe(where, {
+      childList: true,
+      subtree: true
+    });
+  }
 
 export {
   createDivWithText,
