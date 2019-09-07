@@ -12,7 +12,7 @@
  */
 function createDivWithText(text) {
   let elem = document.createElement('div');
-  elem.innerText = text;
+  elem.textContent = text;
 
   return elem;
 }
@@ -49,15 +49,9 @@ function prepend(what, where) {
    findAllPSiblings(document.body) // функция должна вернуть массив с элементами div и span т.к. следующим соседом этих элементов является элемент с тегом P
  */
 function findAllPSiblings(where) {
-  let arr = [];
-
-  for (let i = 0; i < (where.children.length - 1); i++) {
-    let nextElem = where.children[i].nextElementSibling;
-
-    if (nextElem.matches('p')) arr.push(where.children[i]);
-  }
-
-  return arr;
+  return [...where.children].filter(({ nextElementSibling }) => (
+    nextElementSibling && nextElementSibling.tagName === 'P'
+  ))
 }
 
 /*
@@ -101,7 +95,9 @@ function findError(where) {
  */
 function deleteTextNodes(where) {
   for (let node of where.childNodes) {
-    if (node.nodeType === 3) where.removeChild(node);
+    if (node.nodeType === 3) {
+      where.removeChild(node);
+    }
   }
 }
 
@@ -117,12 +113,20 @@ function deleteTextNodes(where) {
    должно быть преобразовано в <span><div><b></b></div><p></p></span>
  */
 function deleteTextNodesRecursive(where) {
-  for (let node of where.childNodes) {
-    if (node.nodeType === 3) node.remove();
+  for (let i = 0; i < where.childNodes.length; i++) {
+    let node = where.childNodes[i];
+
+    if (node.hasChildNodes()) {
+      deleteTextNodesRecursive(node);
+    } else {
+      if (node.nodeType === 3) {
+        node.remove();
+        i -= 1;
+      }
+    }
+
   }
-  for (let node of where.childNodes) {
-    if (node.hasChildNodes()) deleteTextNodesRecursive(node);
-  }
+
 }
 
 /*
@@ -150,28 +154,39 @@ function collectDOMStat(root) {
     tags: {},
     classes: {},
     texts: 0
-  }
-  function check(root) {
-    for (let node of root.childNodes) {
-      if (node.nodeType === 3) stat.texts++;
+  };
+  let node,
+      nodes = [...root.childNodes];
 
-      if (node.nodeType === 1) {
-        if (node.tagName in stat.tags) stat.tags[node.tagName]++;
-        else stat.tags[node.tagName] = 1;
+  for (let i = 0; i < nodes.length; i++) {
+    node = nodes[i];
 
-        for (let i = 0; i < node.classList.length; i++) {
-          let c = node.classList[i];
-          if (c in stat.classes) stat.classes[c]++;
-          else stat.classes[c] = 1
+    if (node.hasChildNodes()) {
+      nodes.push(...node.childNodes);
+    };
+
+    if (node.nodeType === 3) {
+      stat.texts++;
+    }
+
+    if (node.nodeType === 1) {
+      if (node.tagName in stat.tags) {
+        stat.tags[node.tagName]++;
+      } else {
+        stat.tags[node.tagName] = 1;
+      }
+
+      for (let i = 0; i < node.classList.length; i++) {
+        let nodeClass = node.classList[i];
+
+        if (nodeClass in stat.classes) {
+          stat.classes[nodeClass]++;
+        } else {
+          stat.classes[nodeClass] = 1
         }
       }
     }
-    for (let node of root.childNodes) {
-      if (node.hasChildNodes()) check(node);
-    }
   }
-  check(root);
-
   return stat;
 }
 
@@ -207,36 +222,35 @@ function collectDOMStat(root) {
      nodes: [div]
    }
  */
-  function observeChildNodes(where, fn) {
-    let chs = {
-      type: '',
-      nodes: []
-    }
-    let observer = new MutationObserver(mutationRecords => {
-      for (let i = 0; i < mutationRecords.length; i++) {
-        if (mutationRecords[i].addedNodes.length != 0) {
-          let chs = {
-            type: 'insert',
-            nodes: [...mutationRecords[i].addedNodes]
-          }
-          fn(chs);
-        };
-        if (mutationRecords[i].removedNodes.length != 0) {
-          let chs = {
-            type: 'remove',
-            nodes: [...mutationRecords[i].removedNodes]
-          }
-          fn(chs);
-        };
-      }
-    });
-
-    // наблюдать за всем, кроме атрибутов
-    observer.observe(where, {
-      childList: true,
-      subtree: true
-    });
+function observeChildNodes(where, fn) {
+  let chs = {
+    type: '',
+    nodes: []
   }
+  let observer = new MutationObserver(mutationRecords => {
+    for (let i = 0; i < mutationRecords.length; i++) {
+      if (mutationRecords[i].addedNodes.length != 0) {
+        let chs = {
+          type: 'insert',
+          nodes: [...mutationRecords[i].addedNodes]
+        }
+        fn(chs);
+      };
+      if (mutationRecords[i].removedNodes.length != 0) {
+        let chs = {
+          type: 'remove',
+          nodes: [...mutationRecords[i].removedNodes]
+        }
+        fn(chs);
+      };
+    }
+  });
+
+  observer.observe(where, {
+    childList: true,
+    subtree: true
+  });
+}
 
 export {
   createDivWithText,
