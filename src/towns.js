@@ -37,6 +37,40 @@ const homeworkContainer = document.querySelector('#homework-container');
  https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json
  */
 function loadTowns() {
+  function citiesSort(value) {
+    let cities = [];
+
+    cities = value.sort((first, second, prop = 'name') => {
+      let a = first[prop],
+        b = second[prop];
+
+      if (a < b) {
+        return -1
+      } else {
+        return 1
+      }
+      return 0;
+    })
+
+    return cities;
+  }
+
+  return new Promise((resolve, reject) => {
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('GET', 'https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json');
+    xhr.responseType = 'json';
+    xhr.send();
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 400) {
+        reject();
+      } else {
+        resolve(citiesSort(xhr.response));
+      }
+    })
+    xhr.addEventListener('error', reject);
+    xhr.addEventListener('abort', reject);
+  })
 }
 
 /*
@@ -51,6 +85,13 @@ function loadTowns() {
    isMatching('Moscow', 'Moscov') // false
  */
 function isMatching(full, chunk) {
+  full = full.toLowerCase();
+  chunk = chunk.toLowerCase();
+  if (full.indexOf(chunk) > -1) {
+    return true
+  } else {
+    return false
+  }
 }
 
 /* Блок с надписью "Загрузка" */
@@ -62,11 +103,44 @@ const filterInput = homeworkContainer.querySelector('#filter-input');
 /* Блок с результатами поиска */
 const filterResult = homeworkContainer.querySelector('#filter-result');
 
-filterInput.addEventListener('keyup', function() {
-    // это обработчик нажатия кливиш в текстовом поле
+filterInput.addEventListener('keyup', function () {
+  function foo() {
+    loadTowns()
+      .then(towns => {
+        if (filterInput.value === '') {
+          filterResult.innerHTML = '';
+        } else {
+          const value = filterInput.value;
+          let fragment = document.createDocumentFragment();
+
+          for (let item of towns) {
+            if (isMatching(item.name, value)) {
+              let element = document.createElement('p');
+
+              element.textContent = item.name;
+              fragment.appendChild(element);
+            }
+          }
+          filterResult.innerHTML = '';
+          filterResult.appendChild(fragment);
+          fragment = null;
+        }
+      })
+      .catch(() => {
+        loadingBlock.textContent = 'Не удалось загрузить города';
+        let resetButton = document.createElement('button');
+        resetButton.textContent = 'Повторить';
+        resetButton.addEventListener('click', () => {
+          foo();
+          resetButton.remove();
+        });
+        loadingBlock.appendChild(resetButton);
+      })
+  }
+  foo();
 });
 
 export {
-    loadTowns,
-    isMatching
+  loadTowns,
+  isMatching
 };
