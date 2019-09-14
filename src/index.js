@@ -1,88 +1,82 @@
-/* ДЗ 5 - DOM Events */
+/* ДЗ 6 - Асинхронность и работа с сетью */
 
 /*
  Задание 1:
 
- Функция должна добавлять обработчик fn события eventName к элементу target
+ Функция должна возвращать Promise, который должен быть разрешен через указанное количество секунду
 
  Пример:
-   addListener('click', document.querySelector('a'), () => console.log('...')) // должна добавить указанный обработчик кликов на указанный элемент
+   delayPromise(3) // вернет promise, который будет разрешен через 3 секунды
  */
-function addListener(eventName, target, fn) {
-  target.addEventListener(eventName, fn);
+function delayPromise(seconds) {
+  let promise = new Promise((resolve) => {
+    setTimeout(() => resolve(), seconds * 1000);
+  });
+  return promise;
 }
 
 /*
  Задание 2:
 
- Функция должна удалять у элемента target обработчик fn события eventName
+ 2.1: Функция должна вернуть Promise, который должен быть разрешен с массивом городов в качестве значения
+
+ Массив городов можно получить отправив асинхронный запрос по адресу
+ https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json
+
+ 2.2: Элементы полученного массива должны быть отсортированы по имени города
 
  Пример:
-   removeListener('click', document.querySelector('a'), someHandler) // должна удалить указанный обработчик кликов на указанный элемент
+   loadAndSortTowns().then(towns => console.log(towns)) // должна вывести в консоль отсортированный массив городов
  */
-function removeListener(eventName, target, fn) {
-  target.removeEventListener(eventName, fn);
-}
+function loadAndSortTowns(doFetch = false) {
 
-/*
- Задание 3:
+  function citiesSort(value) {
+    let cities = [];
 
- Функция должна добавить к элементу target такой обработчик на события eventName, чтобы он отменял действия по умолчанию
+    cities = value.sort((first, second, prop = 'name') => {
+      let a = first[prop],
+          b = second[prop];
+          
+      if (a < b) {
+        return -1
+      } else {
+        return 1
+      }
+      return 0;
+    })
 
- Пример:
-   skipDefault('click', document.querySelector('a')) // после вызова функции, клики на указанную ссылку не должны приводить к переходу на другую страницу
- */
-function skipDefault(eventName, target) {
-  target.addEventListener(eventName, (event) => { event.preventDefault() })
-}
+    return cities;
+  }
 
-/*
- Задание 4:
+  if (doFetch) {
+    return fetch('https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json')
+      .then(response => {
+        if (response.status >= 400) return Promise.reject();
+        return response.json();
+      })
+      .then(value => citiesSort(value))
+      .catch(() => console.error('Что-то пошло не так'));
+  } else {
+    return new Promise((resolve, reject) => {
+      var xhr = new XMLHttpRequest();
 
- Функция должна эмулировать событие click для элемента target
-
- Пример:
-   emulateClick(document.querySelector('a')) // для указанного элемента должно быть сэмулировано события click
- */
-function emulateClick(target) {
-  target.click();
-}
-
-/*
- Задание 5:
-
- Функция должна добавить такой обработчик кликов к элементу target,
- который реагирует (вызывает fn) только на клики по элементам BUTTON внутри target
-
- Пример:
-   delegate(document.body, () => console.log('кликнули на button')) // добавит такой обработчик кликов для body, который будет вызывать указанную функцию только если кликнули на кнопку (элемент с тегом button)
- */
-function delegate(target, fn) {
-  target.addEventListener('click', (event) => {
-    if (event.target.tagName === 'BUTTON') {
-      fn();
-    }
-  })
-}
-
-/*
- Задание 6:
-
- Функция должна добавить такой обработчик кликов к элементу target,
- который сработает только один раз и удалится (перестанет срабатывать для последующих кликов по указанному элементу)
-
- Пример:
-   once(document.querySelector('button'), () => console.log('обработчик выполнился!')) // добавит такой обработчик кликов для указанного элемента, который вызовется только один раз и затем удалится
- */
-function once(target, fn) {
-  target.addEventListener('click', fn, {once:true})
+      xhr.open('GET', 'https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json');
+      xhr.responseType = 'json';
+      xhr.send();
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 400) {
+          reject();
+        } else {
+          resolve(citiesSort(xhr.response));
+        }
+      })
+      xhr.addEventListener('error', reject);
+      xhr.addEventListener('abort', reject);
+    })
+  }
 }
 
 export {
-  addListener,
-  removeListener,
-  skipDefault,
-  emulateClick,
-  delegate,
-  once
+  delayPromise,
+  loadAndSortTowns
 };
