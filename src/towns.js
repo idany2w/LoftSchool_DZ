@@ -87,11 +87,7 @@ function loadTowns() {
 function isMatching(full, chunk) {
   full = full.toLowerCase();
   chunk = chunk.toLowerCase();
-  if (full.indexOf(chunk) > -1) {
-    return true
-  } else {
-    return false
-  }
+  return full.indexOf(chunk) > -1
 }
 
 /* Блок с надписью "Загрузка" */
