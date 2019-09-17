@@ -54,7 +54,7 @@ listTable.addEventListener('click', (e) => {
 })
 
 filterNameInput.addEventListener('keyup', function () {
-  if (document.cookie.length != 0) {
+  if (document.cookie.length !== 0) {
     let
       cookies = document.cookie.split('; '),
       newListTable = document.createDocumentFragment();
@@ -64,21 +64,10 @@ filterNameInput.addEventListener('keyup', function () {
         cookieData = cookie.split('='),
         filterName = filterNameInput.value.toLowerCase();
 
-      if (cookieData[0].toLowerCase().indexOf(filterName) != -1) {
-        let
-          tr = document.createElement('tr'),
-          tdName = document.createElement('td'),
-          tdValue = document.createElement('td'),
-          tdDelete = document.createElement('td');
+      if (cookieData[0].toLowerCase().indexOf(filterName) !== -1) {
+        let tr = document.createElement('tr');
 
-        tdName.textContent = cookieData[0];
-        tdValue.textContent = cookieData[1];
-        tdDelete.textContent = 'удалить';
-
-        tr.appendChild(tdName);
-        tr.appendChild(tdValue);
-        tr.appendChild(tdDelete);
-
+        tr.innerHTML = '<td>' + cookieData[0] + '</td>' + '<td>' + cookieData[1] + '</td>' + '<td>удалить</td>';
         newListTable.appendChild(tr);
       };
     };
@@ -98,20 +87,10 @@ addButton.addEventListener('click', () => {
   for (let cookie of cookies) {
     let
       tr = document.createElement('tr'),
-      tdName = document.createElement('td'),
-      tdValue = document.createElement('td'),
-      tdDelete = document.createElement('td'),
       cookieData = cookie.split('=');
 
-    tdName.textContent = cookieData[0];
-    tdValue.textContent = cookieData[1];
-    tdDelete.textContent = 'удалить';
-
-    tr.appendChild(tdName);
-    tr.appendChild(tdValue);
-    tr.appendChild(tdDelete);
-
-    newListTable.append(tr);
+    tr.innerHTML = '<td>' + cookieData[0] + '</td>' + '<td>' + cookieData[1] + '</td>' + '<td>удалить</td>';
+    newListTable.appendChild(tr);
   }
   listTable.innerHTML = '';
   listTable.append(newListTable);
